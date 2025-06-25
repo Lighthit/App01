@@ -4,7 +4,7 @@ import axios from 'axios';
 
 export default function HomeScreen() {
   useEffect(() => {
-    axios.get('https://jsonplaceholder.typicode.com/posts/1')
+    axios.get('http://188.166.222.52:54321/object/current')
       .then(response => {
         console.log('Data:', response.data);
       })
