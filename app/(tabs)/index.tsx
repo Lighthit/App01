@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import axios from 'axios';
+import React, { useEffect } from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function HomeScreen() {
   useEffect(() => {
@@ -14,6 +14,7 @@ export default function HomeScreen() {
       })
       .catch(error => {
         console.error('Error:', error);
+        console.log("aaa");
       });
   };
 
