@@ -105,7 +105,8 @@ export default function HomeScreen() {
   <div id="map"></div>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    const map = L.map('map').setView([13.820099, 100.516459], 20);
+    const map = L.map('map').setView([13.820099, 100.516459], 15);  // ลดระดับ zoom ให้อยู่ที่ 15
+
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 22,
       attribution: '&copy; OpenStreetMap contributors'
@@ -239,21 +240,28 @@ export default function HomeScreen() {
     };
     buttonsDiv.addTo(map);
 
-     // ---- Robot Path Tracking ----
+    // ---- Robot Path Tracking ----
     let robotPositions = [];
     let robotPolyline = null;
     let robotMarker = null;
 
     function updateRobotPath(lat, lng) {
+      // เพิ่มค่าพิกัดเพื่อทดสอบ
+      lat += 0.0001; 
+      lng += 0.0001;
+
       const newPoint = [lat, lng];
       robotPositions.push(newPoint);
       console.log('Robot Path:', robotPositions);
 
+      if (robotPositions.length < 2) return;  // ต้องมีหลายจุดถึงจะวาด polyline ได้
+
       if (robotPolyline) {
-        robotPolyline.setLatLngs(robotPositions);
+        robotPolyline.setLatLngs(robotPositions);  // อัปเดตเส้น polyline
       } else {
-        robotPolyline = L.polyline(robotPositions, { color: 'red', weight: 10 }).addTo(map);
+        robotPolyline = L.polyline(robotPositions, { color: 'red', weight: 10 }).addTo(map); // สร้าง polyline ใหม่
       }
+
 
       const robotIcon = L.icon({
         iconUrl: 'https://cdn-icons-png.flaticon.com/512/471/471664.png',
@@ -277,12 +285,11 @@ export default function HomeScreen() {
       } catch (e) {
         console.error('Invalid message:', e);
       }
-    }); 
+    });
   </script>
 </body>
 </html>
 `;
-
 
   return (
     <View style={{ flex: 1 }}>
