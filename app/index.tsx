@@ -9,7 +9,7 @@ export default function HomeScreen() {
   const [refreshKey] = useState(Date.now());
   const [waypoints, setWaypoints] = useState<{ lat: number; lng: number }[]>([]);
   const [coordinates, setCoordinates] = useState<number[][]>([[13.820099, 100.51645900]]);
-  const [Waypoint, setWaypoint] = useState<number[][]>([[13.820099, 100.51645900]]);
+  const [Waypoint_Api, setWaypoint_Api] = useState<number[][]>([[13.820099, 100.51645900]]);
   const onMessage = (event: WebViewMessageEvent) => {
     try {
       const data = JSON.parse(event.nativeEvent.data);
@@ -36,9 +36,10 @@ export default function HomeScreen() {
 
   useEffect(() => {
   fetchData(); // fetch ตอนแรก
-
+  fetchData_waypoint();
   const interval = setInterval(() => {
     fetchData(); // fetch ซ้ำทุก 1 วินาที (ปรับได้)
+    fetchData_waypoint();
   }, 1000);
 
   return () => clearInterval(interval); // clear interval ตอน unmount
@@ -52,6 +53,7 @@ export default function HomeScreen() {
         if (Array.isArray(dataArray) && dataArray.length > 0) {
           const pointList = dataArray.map((item: { lat: number; lng: number }) => [item.lat, item.lng]);
           setCoordinates(pointList);
+          
         } else {
           console.error('Data array is empty or invalid:', dataArray);
         }
@@ -61,6 +63,22 @@ export default function HomeScreen() {
       });
   };
   
+  const fetchData_waypoint = () => {
+    axios.get('http://188.166.222.52:8000/target_position')
+      .then(response => {
+        const dataArray = response.data.waypoints; // เข้าถึง 'waypoints' key ใน response
+        console.log("aa", dataArray);
+        
+        // แปลงข้อมูลจาก {lat, lng} ให้เป็น array ของ [lat, lng]
+        const pointListwayPoint = dataArray.map((item: { lat: number; lng: number }) => [item.lat, item.lng]);
+        setWaypoint_Api(pointListwayPoint);
+        
+      })
+      .catch(error => {
+        console.error('Error:', error);
+      });
+  };
+
 
  const htmlContent = `  
 <!DOCTYPE html>
@@ -110,15 +128,33 @@ export default function HomeScreen() {
       maxZoom: 22,
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
+    
+
+    // 🟥 เส้นทางของ robot (Polyline) — ไม่มี marker ที่นี้
     const points = ${JSON.stringify(coordinates)};
-
-          const polyline = L.polyline(points, {
-            color: 'red',
-            weight: 4,
-            opacity: 0.8
-          }).addTo(map);
-
+    const polyline = L.polyline(points, {
+      color: 'red',
+      weight: 4,
+      opacity: 0.8
+    }).addTo(map);
     map.fitBounds(polyline.getBounds());
+
+    // 🟦 Pin Waypoints (แสดงเฉพาะจาก WAY)
+    const WAY = ${JSON.stringify(Waypoint_Api)};
+    const START_WAYPT = [13.820099, 100.516459]
+    WAY.unshift(START_WAYPT);
+    console.log(WAY);
+
+    // แสดง markers เฉพาะจาก WAY
+    WAY.forEach(([lat, lng]) => {
+      L.marker([lat, lng]).addTo(map);
+    });
+    const polyliness = L.polyline(WAY, {
+      color: 'blue',
+      weight: 4,
+      opacity: 0.8
+    }).addTo(map);
+
 
     let waypoints = [];
     let lines = [];
@@ -132,7 +168,7 @@ export default function HomeScreen() {
     });
     const startMarker = L.marker([startLat, startLng], { icon: startIcon }).addTo(map).bindPopup('Start Point').openPopup();
     waypoints.push(startMarker);
-
+    
     function getDistance(lat1, lon1, lat2, lon2) {
       const R = 6371000;
       const toRad = deg => deg * Math.PI / 180;
