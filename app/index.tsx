@@ -8,7 +8,8 @@ export default function HomeScreen() {
   const webviewRef = useRef<WebViewType>(null);
   const [refreshKey] = useState(Date.now());
   const [waypoints, setWaypoints] = useState<{ lat: number; lng: number }[]>([]);
-
+  const [coordinates, setCoordinates] = useState<number[][]>([[13.820099, 100.51645900]]);
+  const [Waypoint, setWaypoint] = useState<number[][]>([[13.820099, 100.51645900]]);
   const onMessage = (event: WebViewMessageEvent) => {
     try {
       const data = JSON.parse(event.nativeEvent.data);
@@ -34,34 +35,32 @@ export default function HomeScreen() {
   };
 
   useEffect(() => {
-    const interval = setInterval(async () => {
-      try {
-        const response = await axios.get('http://188.166.222.52:8000/robot_position');
-        const data = response.data;
-        console.log("📡 Sending to WebView:", data.data.at(-1));
+  fetchData(); // fetch ตอนแรก
 
-        if (webviewRef.current && data?.data?.length > 0) {
-          const lastPos = data.data.at(-1);
-          const lat = lastPos?.lat || 0;
-          const lng = lastPos?.lng || 0;
+  const interval = setInterval(() => {
+    fetchData(); // fetch ซ้ำทุก 1 วินาที (ปรับได้)
+  }, 1000);
 
-          webviewRef.current.injectJavaScript(`
-            window.dispatchEvent(new MessageEvent('message', {
-              data: JSON.stringify({
-                type: 'robot_position',
-                lat: ${lat},
-                lng: ${lng}
-              })
-            }));
-          `);
+  return () => clearInterval(interval); // clear interval ตอน unmount
+}, []);
+
+  const fetchData = () => {
+    axios.get('http://188.166.222.52:8000/robot_position')
+      .then(response => {
+        const dataArray = response.data.data;
+        console.log(dataArray);
+        if (Array.isArray(dataArray) && dataArray.length > 0) {
+          const pointList = dataArray.map((item: { lat: number; lng: number }) => [item.lat, item.lng]);
+          setCoordinates(pointList);
+        } else {
+          console.error('Data array is empty or invalid:', dataArray);
         }
-      } catch (err: any) {
-        console.error("❌ Error fetching robot position (axios):", err.message || err);
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
+      })
+      .catch(error => {
+        console.error('Error:', error);
+      });
+  };
+  
 
  const htmlContent = `  
 <!DOCTYPE html>
@@ -111,6 +110,15 @@ export default function HomeScreen() {
       maxZoom: 22,
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
+    const points = ${JSON.stringify(coordinates)};
+
+          const polyline = L.polyline(points, {
+            color: 'red',
+            weight: 4,
+            opacity: 0.8
+          }).addTo(map);
+
+    map.fitBounds(polyline.getBounds());
 
     let waypoints = [];
     let lines = [];
