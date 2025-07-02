@@ -134,7 +134,7 @@ export default function HomeScreen() {
     const points = ${JSON.stringify(coordinates)};
     const polyline = L.polyline(points, {
       color: 'red',
-      weight: 4,
+      weight: 1,
       opacity: 0.8
     }).addTo(map);
     map.fitBounds(polyline.getBounds());
@@ -151,7 +151,7 @@ export default function HomeScreen() {
     });
     const polyliness = L.polyline(WAY, {
       color: 'blue',
-      weight: 4,
+      weight: 0.5,
       opacity: 0.8
     }).addTo(map);
 
@@ -166,7 +166,7 @@ export default function HomeScreen() {
       iconSize: [40, 40],
       iconAnchor: [20, 40],
     });
-    const startMarker = L.marker([startLat, startLng], { icon: startIcon }).addTo(map).bindPopup('Start Point').openPopup();
+    const startMarker = L.marker([startLat, startLng], { icon: startIcon }).addTo(map);
     waypoints.push(startMarker);
     
     function getDistance(lat1, lon1, lat2, lon2) {
@@ -309,8 +309,8 @@ export default function HomeScreen() {
 
       const robotIcon = L.icon({
         iconUrl: 'https://cdn-icons-png.flaticon.com/512/471/471664.png',
-        iconSize: [40, 40],
-        iconAnchor: [20, 20],
+        iconSize: [25, 25],
+        iconAnchor: [12.5, 25],
       });
 
       if (robotMarker) {
